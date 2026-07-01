@@ -67,7 +67,6 @@ Open [http://localhost:3000](http://localhost:3000).
 2. Import the project in [Vercel](https://vercel.com/new).
 3. Add environment variables:
    - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 4. Deploy.
 
 Vercel auto-detects Next.js — no extra configuration required.

@@ -3,11 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { createClient } from "@/lib/supabase/client";
+import { hasSupabaseConfig } from "@/lib/supabase/env";
 import type { Task } from "@/types/database";
 
-const hasSupabase =
-  Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
-  Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+const hasSupabase = hasSupabaseConfig();
 
 export function useTasks() {
   return useQuery({

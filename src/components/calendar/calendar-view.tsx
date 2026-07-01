@@ -6,8 +6,6 @@ import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import type { EventInput } from "@fullcalendar/core";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 interface CalendarViewProps {
   events?: EventInput[];
   onEventDrop?: (eventId: string, start: Date, end: Date | null) => void;
@@ -15,11 +13,13 @@ interface CalendarViewProps {
 
 export function CalendarView({ events = [], onEventDrop }: CalendarViewProps) {
   return (
-    <Card className="h-full">
-      <CardHeader>
-        <CardTitle>Schedule</CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="flex h-full flex-col rounded-lg border border-border bg-card dark:bg-[#262626]">
+      <div className="border-b border-border px-4 py-3">
+        <h3 className="text-sm font-semibold">Schedule</h3>
+        <p className="text-xs text-muted-foreground">Week view with time blocks</p>
+      </div>
+
+      <div className="p-4">
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
@@ -43,7 +43,7 @@ export function CalendarView({ events = [], onEventDrop }: CalendarViewProps) {
           }}
           height="auto"
         />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
