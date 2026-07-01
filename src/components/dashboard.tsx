@@ -1,27 +1,46 @@
 "use client";
 
-import { CalendarView } from "@/components/calendar/calendar-view";
 import { AppShell } from "@/components/layout/app-shell";
-import { SortableTaskList } from "@/components/tasks/sortable-task-list";
+import { DashboardPanels } from "@/components/dashboard/dashboard-panels";
 import { useTasks, useTimeBlocks } from "@/hooks/use-tasks";
 import { useUser } from "@/hooks/use-user";
+import { useCalendarFilters } from "@/providers/calendar-filter-provider";
+import { useWorkspaceEdit } from "@/providers/workspace-edit-provider";
+import { useMemo } from "react";
 
 export function Dashboard() {
   const userQuery = useUser();
   const tasksQuery = useTasks();
   const timeBlocksQuery = useTimeBlocks();
+  const { getVisibleFilterIdsByType, getFilterById } = useCalendarFilters();
+  const { isEditMode } = useWorkspaceEdit();
 
   const user = userQuery.data;
   const tasks = tasksQuery.data ?? [];
+  const visibleScheduleFilterIds = getVisibleFilterIdsByType("schedules");
 
-  const events =
-    timeBlocksQuery.data?.map((block) => ({
-      id: block.id,
-      title: block.title,
-      start: block.starts_at,
-      end: block.ends_at,
-      backgroundColor: block.color ?? undefined,
-    })) ?? [];
+  const events = useMemo(() => {
+    if (visibleScheduleFilterIds.length === 0) {
+      return [];
+    }
+
+    const defaultFilterId = visibleScheduleFilterIds[0];
+    const defaultFilter = getFilterById(defaultFilterId);
+
+    return (
+      timeBlocksQuery.data?.map((block) => ({
+        id: block.id,
+        title: block.title,
+        start: block.starts_at,
+        end: block.ends_at,
+        backgroundColor: block.color ?? defaultFilter?.color,
+        borderColor: block.color ?? defaultFilter?.color,
+        extendedProps: {
+          filterId: defaultFilterId,
+        },
+      })) ?? []
+    );
+  }, [getFilterById, timeBlocksQuery.data, visibleScheduleFilterIds]);
 
   const displayName =
     user?.user_metadata?.full_name ??
@@ -30,29 +49,21 @@ export function Dashboard() {
     "User";
 
   return (
-    <AppShell title="Overview" userLabel={displayName}>
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-6">
-        <section id="overview" className="scroll-mt-20">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold tracking-tight">Today</h2>
-            <p className="text-sm text-muted-foreground">
-              Plan your day with tasks and time blocks in one calm workspace.
-            </p>
-          </div>
-        </section>
+    <AppShell userLabel={displayName}>
+      <div
+        className={
+          isEditMode
+            ? "mx-auto flex w-full max-w-7xl flex-col gap-8 overflow-x-hidden rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-6"
+            : "flex min-h-0 flex-1 flex-col overflow-hidden"
+        }
+      >
+        {isEditMode ? <section id="overview" className="scroll-mt-20" /> : null}
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-          <section id="tasks" className="scroll-mt-20">
-            <SortableTaskList
-              initialTasks={tasks}
-              isLoading={tasksQuery.isLoading}
-            />
-          </section>
-
-          <section id="calendar" className="scroll-mt-20">
-            <CalendarView events={events} />
-          </section>
-        </div>
+        <DashboardPanels
+          tasks={tasks}
+          isLoadingTasks={tasksQuery.isLoading}
+          events={events}
+        />
       </div>
     </AppShell>
   );

@@ -3,23 +3,16 @@ import { AppTopBar } from "@/components/layout/app-top-bar";
 
 interface AppShellProps {
   children: React.ReactNode;
-  title: string;
-  subtitle?: string;
   userLabel?: string;
 }
 
-export function AppShell({
-  children,
-  title,
-  subtitle,
-  userLabel,
-}: AppShellProps) {
+export function AppShell({ children, userLabel }: AppShellProps) {
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen min-h-0 overflow-hidden bg-background">
       <AppSidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <AppTopBar title={title} subtitle={subtitle} userLabel={userLabel} />
-        <main className="flex-1 overflow-auto">{children}</main>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <AppTopBar userLabel={userLabel} />
+        <main className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</main>
       </div>
     </div>
   );

@@ -161,16 +161,43 @@
 
 .fc .fc-button {
   border-radius: 0.5rem;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 500;
-  padding: 0.375rem 0.75rem;
+  padding: 0.25rem 0.55rem;
   box-shadow: none;
+}
+
+.fc .fc-button:focus,
+.fc .fc-button:focus-visible,
+.fc .fc-button-primary:focus,
+.fc .fc-button-primary:focus-visible {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  border-color: transparent !important;
+}
+
+.fc .fc-button .fc-icon {
+  font-size: 0.8rem;
 }
 
 .fc .fc-col-header-cell-cushion,
 .fc .fc-timegrid-slot-label-cushion {
   font-size: 0.75rem;
   color: var(--muted-foreground);
+}
+
+.fc .fc-day-sat .fc-col-header-cell-cushion,
+.fc .fc-daygrid-day.fc-day-sat .fc-daygrid-day-number {
+  color: #0a84ff;
+}
+
+.fc .fc-day-sun .fc-col-header-cell-cushion,
+.fc .fc-daygrid-day.fc-day-sun .fc-daygrid-day-number {
+  color: #c41e3a;
 }
 
 .fc .fc-timegrid-event {
@@ -209,6 +236,16 @@
   color: #8e8e93;
 }
 
+.dark .fc .fc-day-sat .fc-col-header-cell-cushion,
+.dark .fc .fc-daygrid-day.fc-day-sat .fc-daygrid-day-number {
+  color: #0a84ff;
+}
+
+.dark .fc .fc-day-sun .fc-col-header-cell-cushion,
+.dark .fc .fc-daygrid-day.fc-day-sun .fc-daygrid-day-number {
+  color: #c41e3a;
+}
+
 .dark .fc .fc-toolbar-title {
   color: #ffffff;
   font-weight: 600;
@@ -221,13 +258,13 @@
   min-width: 1.5rem;
   min-height: 1.5rem;
   border-radius: 9999px;
-  background-color: #ff3b30;
+  background-color: #c41e3a;
   color: #ffffff !important;
   font-weight: 600;
 }
 
 .dark .fc .fc-timegrid-col.fc-day-today {
-  background-color: rgb(255 59 48 / 6%);
+  background-color: rgb(196 30 58 / 10%);
 }
 
 .dark .fc .fc-scrollgrid,
