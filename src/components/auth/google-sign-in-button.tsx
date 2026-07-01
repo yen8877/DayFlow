@@ -53,7 +53,7 @@ export function GoogleSignInButton() {
       type="button"
       variant="outline"
       size="lg"
-      className="h-11 w-full gap-2.5 border-border bg-background font-medium shadow-none hover:bg-accent"
+      className="h-11 w-full gap-2.5 border-border bg-background font-medium shadow-none hover:bg-accent dark:border-[#48484a] dark:bg-[#3a3a3c] dark:hover:bg-[#48484a] dark:shadow-[inset_0_1px_0_0_rgb(255_255_255/6%)]"
       onClick={handleSignIn}
       disabled={isLoading}
     >
