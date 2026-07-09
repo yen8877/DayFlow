@@ -125,7 +125,34 @@ export function WorkspaceEditProvider({
       return;
     }
 
-    setDraftGroups((current) => current.filter((group) => group.id !== groupId));
+    setDraftGroups((current) => {
+      const sourceGroup = current.find((group) => group.id === groupId);
+      if (!sourceGroup) {
+        return current;
+      }
+
+      const groupsWithUngrouped = ensureUngroupedGroup(current);
+      const targetUngrouped = groupsWithUngrouped.find(
+        (group) => group.id === UNGROUPED_GROUP_ID,
+      );
+      if (!targetUngrouped) {
+        return current;
+      }
+
+      const movedItems = sourceGroup.items.map((item) => ({
+        ...item,
+        groupId: UNGROUPED_GROUP_ID,
+        filterType: item.filterType ?? targetUngrouped.type,
+      }));
+
+      return groupsWithUngrouped
+        .filter((group) => group.id !== groupId)
+        .map((group) =>
+          group.id === UNGROUPED_GROUP_ID
+            ? { ...group, items: [...group.items, ...movedItems] }
+            : group,
+        );
+    });
   }, []);
 
   const addGroup = useCallback((type: CalendarFilterGroupType = "projects") => {
@@ -236,6 +263,7 @@ export function WorkspaceEditProvider({
       const targetItemIndex = isOverGroup
         ? targetGroup.items.length
         : targetGroup.items.findIndex((item) => item.id === overId);
+      const safeTargetItemIndex = targetItemIndex < 0 ? targetGroup.items.length : targetItemIndex;
 
       const next = current.map((group) => ({
         ...group,
@@ -252,7 +280,7 @@ export function WorkspaceEditProvider({
         filterType: filter.filterType ?? sourceGroup.type,
       };
 
-      next[targetGroupIndex].items.splice(targetItemIndex, 0, movedFilter);
+      next[targetGroupIndex].items.splice(safeTargetItemIndex, 0, movedFilter);
       return next;
     });
   }, []);

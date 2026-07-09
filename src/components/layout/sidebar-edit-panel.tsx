@@ -6,7 +6,6 @@ import {
   KeyboardSensor,
   PointerSensor,
   closestCenter,
-  useDroppable,
   type CollisionDetection,
   type DragEndEvent,
   type DragOverEvent,
@@ -27,8 +26,6 @@ import { useCallback, useRef, useState } from "react";
 
 import { SidebarFilterItem } from "@/components/layout/sidebar-filter-item";
 import {
-  UNGROUPED_GROUP_ID,
-  UNGROUPED_GROUP_LABEL,
   type CalendarFilter,
   type CalendarFilterGroup,
 } from "@/lib/calendar/default-filters";
@@ -46,7 +43,11 @@ type GroupInsertionTarget = {
   lineY: number;
 };
 
-const UNGROUPED_DROP_ID = "__ungrouped_drop__";
+type FilterInsertionTarget = {
+  groupId: string;
+  overId: string;
+  position: "before" | "after";
+};
 
 function getDragPointerY(event: DragOverEvent | DragEndEvent): number | null {
   const activator = event.activatorEvent;
@@ -86,7 +87,7 @@ function SortableGroupSection({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: group.id,
     data: { kind: "group" },
-    disabled: dragKind === "filter",
+    disabled: false,
     animateLayoutChanges: () => false,
   });
 
@@ -115,8 +116,8 @@ function SortableGroupSection({
     >
       <div
         className="mb-2 flex cursor-grab items-center gap-1 active:cursor-grabbing"
-        {...attributes}
-        {...listeners}
+        {...(dragKind === "filter" ? {} : attributes)}
+        {...(dragKind === "filter" ? {} : listeners)}
       >
         <GripVertical className="size-3.5 shrink-0 text-muted-foreground" />
         <input
@@ -188,7 +189,7 @@ function SortableFilterRow({
         transform: CSS.Translate.toString(transform),
         transition,
       }}
-      className={cn("flex w-full items-center gap-1", isDragging && "opacity-40")}
+      className={cn("relative z-0 flex w-full items-center gap-1", isDragging && "opacity-40")}
     >
       <button
         type="button"
@@ -232,24 +233,6 @@ function FilterDragPreview({ filter }: { filter: CalendarFilter }) {
         />
         <span className="truncate text-[13px]">{filter.label}</span>
       </div>
-    </div>
-  );
-}
-
-function UngroupedDropArea({ hasActiveOver }: { hasActiveOver: boolean }) {
-  const { setNodeRef } = useDroppable({ id: UNGROUPED_DROP_ID });
-
-  return (
-    <div
-      ref={setNodeRef}
-      className={cn(
-        "mt-3 rounded-lg border border-dashed px-2 py-2 text-center text-[11px] text-muted-foreground",
-        hasActiveOver
-          ? "border-primary bg-primary/10 text-primary"
-          : "border-border bg-background/40",
-      )}
-    >
-      그룹 밖으로 이동 (기타)
     </div>
   );
 }
@@ -329,6 +312,8 @@ export function SidebarEditPanel() {
   const [activeDrag, setActiveDrag] = useState<DragItem | null>(null);
   const [groupInsertionTarget, setGroupInsertionTarget] =
     useState<GroupInsertionTarget | null>(null);
+  const [filterInsertionTarget, setFilterInsertionTarget] =
+    useState<FilterInsertionTarget | null>(null);
   const [dropLineOffset, setDropLineOffset] = useState<number | null>(null);
 
   const groupIds = draftGroups.map((group) => group.id);
@@ -348,6 +333,9 @@ export function SidebarEditPanel() {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
+  const modifiers = dragKind === "filter"
+    ? [restrictToVerticalAxis]
+    : [restrictToVerticalAxis, restrictToParentElement];
 
   const collisionDetection = useCallback<CollisionDetection>(
     (args) => {
@@ -414,18 +402,55 @@ export function SidebarEditPanel() {
 
   function handleDragOver(event: DragOverEvent) {
     const activeId = String(event.active.id);
-    if (!groupIds.includes(activeId)) {
-      setGroupInsertionTarget(null);
-      setDropLineOffset(null);
-      return;
-    }
-
     const pointerY = getDragPointerY(event);
     if (pointerY === null) {
       return;
     }
 
-    updateGroupDropIndicator(activeId, pointerY);
+    if (groupIds.includes(activeId)) {
+      setFilterInsertionTarget(null);
+      updateGroupDropIndicator(activeId, pointerY);
+      return;
+    }
+
+    setGroupInsertionTarget(null);
+    setDropLineOffset(null);
+
+    const overId = event.over ? String(event.over.id) : null;
+    if (!overId || overId === activeId) {
+      setFilterInsertionTarget(null);
+      return;
+    }
+
+    const targetGroup = draftGroups.find(
+      (group) => group.id === overId || group.items.some((item) => item.id === overId),
+    );
+    if (!targetGroup) {
+      setFilterInsertionTarget(null);
+      return;
+    }
+
+    if (targetGroup.id === overId) {
+      setFilterInsertionTarget({
+        groupId: targetGroup.id,
+        overId,
+        position: "after",
+      });
+      return;
+    }
+
+    const overRect = event.over?.rect;
+    if (!overRect) {
+      setFilterInsertionTarget(null);
+      return;
+    }
+
+    const overMidY = overRect.top + overRect.height / 2;
+    setFilterInsertionTarget({
+      groupId: targetGroup.id,
+      overId,
+      position: pointerY <= overMidY ? "before" : "after",
+    });
   }
 
   function handleDragEnd(event: DragEndEvent) {
@@ -436,6 +461,7 @@ export function SidebarEditPanel() {
     setDragKind(null);
     setActiveDrag(null);
     setGroupInsertionTarget(null);
+    setFilterInsertionTarget(null);
     setDropLineOffset(null);
 
     if (isGroupDrag) {
@@ -473,6 +499,7 @@ export function SidebarEditPanel() {
     setDragKind(null);
     setActiveDrag(null);
     setGroupInsertionTarget(null);
+    setFilterInsertionTarget(null);
     setDropLineOffset(null);
   }
 
@@ -554,7 +581,7 @@ export function SidebarEditPanel() {
         <DndContext
           sensors={sensors}
           collisionDetection={collisionDetection}
-          modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+          modifiers={modifiers}
           onDragStart={handleDragStart}
           onDragMove={handleDragOver}
           onDragOver={handleDragOver}
@@ -577,16 +604,31 @@ export function SidebarEditPanel() {
                   strategy={verticalListSortingStrategy}
                 >
                   {group.items.map((item) => (
-                    <SortableFilterRow
-                      key={item.id}
-                      filter={item}
-                      dragKind={dragKind}
-                      onToggleVisibility={handleToggleVisibility}
-                      onColorChange={handleColorChange}
-                      onLabelChange={handleLabelChange}
-                      onDelete={handleDeleteFilter}
-                    />
+                    <div key={item.id}>
+                      {filterInsertionTarget?.groupId === group.id &&
+                      filterInsertionTarget.overId === item.id &&
+                      filterInsertionTarget.position === "before" ? (
+                        <div className="pointer-events-none relative z-20 mx-2 my-1 h-0.5 rounded-full bg-primary shadow-[0_0_6px_0] shadow-primary/50" />
+                      ) : null}
+                      <SortableFilterRow
+                        filter={item}
+                        dragKind={dragKind}
+                        onToggleVisibility={handleToggleVisibility}
+                        onColorChange={handleColorChange}
+                        onLabelChange={handleLabelChange}
+                        onDelete={handleDeleteFilter}
+                      />
+                      {filterInsertionTarget?.groupId === group.id &&
+                      filterInsertionTarget.overId === item.id &&
+                      filterInsertionTarget.position === "after" ? (
+                        <div className="pointer-events-none relative z-20 mx-2 my-1 h-0.5 rounded-full bg-primary shadow-[0_0_6px_0] shadow-primary/50" />
+                      ) : null}
+                    </div>
                   ))}
+                  {filterInsertionTarget?.groupId === group.id &&
+                  filterInsertionTarget.overId === group.id ? (
+                    <div className="pointer-events-none relative z-20 mx-2 my-1 h-0.5 rounded-full bg-primary shadow-[0_0_6px_0] shadow-primary/50" />
+                  ) : null}
                 </SortableContext>
               </SortableGroupSection>
             ))}
