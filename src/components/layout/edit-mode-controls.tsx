@@ -63,7 +63,7 @@ export function EditModeHeader({ children }: { children: React.ReactNode }) {
   return (
     <header
       className={cn(
-        "flex h-14 shrink-0 items-center border-b px-6 backdrop-blur-xl dark:backdrop-saturate-150",
+        "flex h-14 shrink-0 items-center px-6 backdrop-blur-xl dark:backdrop-saturate-150",
         isEditMode
           ? "border-primary/30 bg-primary/5"
           : "border-sidebar-border bg-sidebar",

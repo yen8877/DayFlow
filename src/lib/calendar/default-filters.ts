@@ -1,10 +1,13 @@
 import { getPalette } from "@/lib/calendar/color-palettes";
 
 export type CalendarFilterGroupType = "projects" | "schedules";
+export const UNGROUPED_GROUP_ID = "__ungrouped__";
+export const UNGROUPED_GROUP_LABEL = "기타";
 
 export interface CalendarFilter {
   id: string;
   groupId: string;
+  filterType?: CalendarFilterGroupType;
   label: string;
   color: string;
   visible: boolean;

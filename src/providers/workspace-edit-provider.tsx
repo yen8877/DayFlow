@@ -13,6 +13,8 @@ import {
   createFilterId,
   createGroupId,
   flattenFilters,
+  UNGROUPED_GROUP_ID,
+  UNGROUPED_GROUP_LABEL,
   type CalendarFilter,
   type CalendarFilterGroup,
   type CalendarFilterGroupType,
@@ -52,6 +54,25 @@ function cloneLayout(layout: DashboardLayout) {
   return structuredClone(layout);
 }
 
+function ensureUngroupedGroup(groups: CalendarFilterGroup[]) {
+  const hasUngrouped = groups.some((group) => group.id === UNGROUPED_GROUP_ID);
+  if (hasUngrouped) {
+    return groups;
+  }
+
+  const ungroupedGroup: CalendarFilterGroup = {
+    id: UNGROUPED_GROUP_ID,
+    type: "projects",
+    label: UNGROUPED_GROUP_LABEL,
+    items: [],
+  };
+
+  return [
+    ...groups,
+    ungroupedGroup,
+  ];
+}
+
 interface WorkspaceEditProviderProps {
   children: ReactNode;
   groups: CalendarFilterGroup[];
@@ -70,13 +91,13 @@ export function WorkspaceEditProvider({
   const [draftLayout, setDraftLayout] = useState<DashboardLayout>(dashboardLayout);
 
   const enterEditMode = useCallback(() => {
-    setDraftGroups(cloneGroups(groups));
+    setDraftGroups(ensureUngroupedGroup(cloneGroups(groups)));
     setDraftLayout(cloneLayout(dashboardLayout));
     setIsEditMode(true);
   }, [dashboardLayout, groups]);
 
   const cancelEditMode = useCallback(() => {
-    setDraftGroups(cloneGroups(groups));
+    setDraftGroups(ensureUngroupedGroup(cloneGroups(groups)));
     setDraftLayout(cloneLayout(dashboardLayout));
     setIsEditMode(false);
   }, [dashboardLayout, groups]);
@@ -100,6 +121,10 @@ export function WorkspaceEditProvider({
   }, []);
 
   const deleteGroup = useCallback((groupId: string) => {
+    if (groupId === UNGROUPED_GROUP_ID) {
+      return;
+    }
+
     setDraftGroups((current) => current.filter((group) => group.id !== groupId));
   }, []);
 
@@ -108,7 +133,7 @@ export function WorkspaceEditProvider({
     const nextGroup: CalendarFilterGroup = {
       id,
       type,
-      label: type === "projects" ? "새 스프린트 그룹" : "새 일정 그룹",
+      label: "새 그룹",
       items: [],
     };
 
@@ -132,6 +157,7 @@ export function WorkspaceEditProvider({
                   label: "새 라벨",
                   color: defaultColor,
                   visible: true,
+                  filterType: group.type,
                 },
               ],
             }
@@ -223,6 +249,7 @@ export function WorkspaceEditProvider({
       const movedFilter: CalendarFilter = {
         ...filter,
         groupId: targetGroup.id,
+        filterType: filter.filterType ?? sourceGroup.type,
       };
 
       next[targetGroupIndex].items.splice(targetItemIndex, 0, movedFilter);

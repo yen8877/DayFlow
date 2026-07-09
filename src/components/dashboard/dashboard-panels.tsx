@@ -255,7 +255,7 @@ export function DashboardPanels({ tasks, isLoadingTasks, events }: DashboardPane
   }
 
   const grid = (
-    <div className="grid min-w-0 grid-cols-2 gap-6 overflow-hidden">
+    <div className="grid min-h-0 min-w-0 flex-1 grid-cols-2 gap-4 overflow-hidden">
       {panelOrder.map((panelId) => (
         <SortablePanel key={panelId} id={panelId} isEditMode={isEditMode}>
           {panelContent[panelId]}

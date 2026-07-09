@@ -14,7 +14,7 @@ const DEFAULT_WIDTH = 224;
 const MIN_WIDTH = 180;
 const MAX_WIDTH = 360;
 const DATE_HEADER_CLASS =
-  "relative flex h-14 shrink-0 items-center justify-center border-b border-sidebar-border";
+  "relative flex h-14 shrink-0 items-center justify-center";
 
 function formatMonthDay(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");

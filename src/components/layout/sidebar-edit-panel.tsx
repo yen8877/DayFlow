@@ -6,6 +6,7 @@ import {
   KeyboardSensor,
   PointerSensor,
   closestCenter,
+  useDroppable,
   type CollisionDetection,
   type DragEndEvent,
   type DragOverEvent,
@@ -25,7 +26,12 @@ import { GripVertical, Plus, Trash2 } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 
 import { SidebarFilterItem } from "@/components/layout/sidebar-filter-item";
-import type { CalendarFilter, CalendarFilterGroup } from "@/lib/calendar/default-filters";
+import {
+  UNGROUPED_GROUP_ID,
+  UNGROUPED_GROUP_LABEL,
+  type CalendarFilter,
+  type CalendarFilterGroup,
+} from "@/lib/calendar/default-filters";
 import { useWorkspaceEdit } from "@/providers/workspace-edit-provider";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +45,8 @@ type GroupInsertionTarget = {
   insertIndex: number;
   lineY: number;
 };
+
+const UNGROUPED_DROP_ID = "__ungrouped_drop__";
 
 function getDragPointerY(event: DragOverEvent | DragEndEvent): number | null {
   const activator = event.activatorEvent;
@@ -224,6 +232,24 @@ function FilterDragPreview({ filter }: { filter: CalendarFilter }) {
         />
         <span className="truncate text-[13px]">{filter.label}</span>
       </div>
+    </div>
+  );
+}
+
+function UngroupedDropArea({ hasActiveOver }: { hasActiveOver: boolean }) {
+  const { setNodeRef } = useDroppable({ id: UNGROUPED_DROP_ID });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "mt-3 rounded-lg border border-dashed px-2 py-2 text-center text-[11px] text-muted-foreground",
+        hasActiveOver
+          ? "border-primary bg-primary/10 text-primary"
+          : "border-border bg-background/40",
+      )}
+    >
+      그룹 밖으로 이동 (기타)
     </div>
   );
 }
@@ -502,19 +528,11 @@ export function SidebarEditPanel() {
       <div className="mb-2 flex shrink-0 gap-2">
         <button
           type="button"
-          onClick={() => addGroup("projects")}
+          onClick={() => addGroup()}
           className="flex flex-1 items-center justify-center gap-1 rounded-md border border-dashed border-border px-2 py-2 text-[11px] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
         >
           <Plus className="size-3" />
-          스프린트 그룹
-        </button>
-        <button
-          type="button"
-          onClick={() => addGroup("schedules")}
-          className="flex flex-1 items-center justify-center gap-1 rounded-md border border-dashed border-border px-2 py-2 text-[11px] text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
-        >
-          <Plus className="size-3" />
-          일정 그룹
+          그룹 추가
         </button>
       </div>
 

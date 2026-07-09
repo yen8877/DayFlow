@@ -1,6 +1,8 @@
 import {
   CALENDAR_FILTERS_DEFAULTS_VERSION,
   defaultCalendarFilterGroups,
+  UNGROUPED_GROUP_ID,
+  UNGROUPED_GROUP_LABEL,
   type CalendarFilterGroup,
 } from "@/lib/calendar/default-filters";
 import {
@@ -28,7 +30,7 @@ function notifyWorkspaceStorage() {
 }
 
 function normalizeGroups(parsed: CalendarFilterGroup[]) {
-  return parsed.map((group) => ({
+  const normalized: CalendarFilterGroup[] = parsed.map((group) => ({
     ...group,
     type:
       group.type ??
@@ -36,8 +38,28 @@ function normalizeGroups(parsed: CalendarFilterGroup[]) {
     items: group.items.map((item) => ({
       ...item,
       groupId: item.groupId ?? group.id,
+      filterType:
+        item.filterType ??
+        (group.id === "schedules" ? ("schedules" as const) : ("projects" as const)),
     })),
   }));
+
+  const ungrouped = normalized.find((group) => group.id === UNGROUPED_GROUP_ID);
+  if (ungrouped) {
+    return normalized;
+  }
+
+  const ungroupedGroup: CalendarFilterGroup = {
+    id: UNGROUPED_GROUP_ID,
+    type: "projects",
+    label: UNGROUPED_GROUP_LABEL,
+    items: [],
+  };
+
+  return [
+    ...normalized,
+    ungroupedGroup,
+  ];
 }
 
 function parseStoredGroups(raw: string | null): CalendarFilterGroup[] {

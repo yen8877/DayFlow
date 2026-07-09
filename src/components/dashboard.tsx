@@ -53,12 +53,10 @@ export function Dashboard() {
       <div
         className={
           isEditMode
-            ? "mx-auto flex w-full max-w-7xl flex-col gap-8 overflow-x-hidden rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-6"
+            ? "flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden border-2 border-dashed border-primary/30 bg-primary/5 p-4"
             : "flex min-h-0 flex-1 flex-col overflow-hidden"
         }
       >
-        {isEditMode ? <section id="overview" className="scroll-mt-20" /> : null}
-
         <DashboardPanels
           tasks={tasks}
           isLoadingTasks={tasksQuery.isLoading}
