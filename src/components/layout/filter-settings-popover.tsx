@@ -16,6 +16,7 @@ interface FilterSettingsPopoverProps {
   label: string;
   color: string;
   onSave: (label: string, color: string) => void;
+  onColorPreview?: (color: string) => void;
   onDelete: () => void;
 }
 
@@ -32,14 +33,20 @@ export function FilterSettingsPopover({
   label,
   color,
   onSave,
+  onColorPreview,
   onDelete,
 }: FilterSettingsPopoverProps) {
   const [activeTheme, setActiveTheme] = useState<ColorPaletteTheme>("default");
   const [draftLabel, setDraftLabel] = useState(label);
   const [draftColor, setDraftColor] = useState(color);
+  const [customDefaultColors, setCustomDefaultColors] = useState<string[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isCustomPickerOpen, setIsCustomPickerOpen] = useState(false);
   const activePalette = COLOR_PALETTES.find((palette) => palette.theme === activeTheme)!;
+  const visibleColors =
+    activeTheme === "default"
+      ? [...activePalette.colors, ...customDefaultColors]
+      : activePalette.colors;
 
   function handleSave() {
     const trimmed = draftLabel.trim();
@@ -85,7 +92,7 @@ export function FilterSettingsPopover({
           </div>
 
           <div className="grid grid-cols-6 gap-2">
-            {activePalette.colors.map((paletteColor) => {
+            {visibleColors.map((paletteColor) => {
               const isSelected = draftColor.toLowerCase() === paletteColor.toLowerCase();
 
               return (
@@ -95,6 +102,7 @@ export function FilterSettingsPopover({
                   aria-label={`Select color ${paletteColor}`}
                   onClick={() => {
                     setDraftColor(paletteColor);
+                    onColorPreview?.(paletteColor);
                     setIsCustomPickerOpen(false);
                   }}
                   className="flex size-7 items-center justify-center rounded-full transition-transform hover:scale-105"
@@ -113,20 +121,22 @@ export function FilterSettingsPopover({
               );
             })}
 
-            <button
-              type="button"
-              aria-label="Custom color"
-              aria-pressed={isCustomPickerOpen}
-              onClick={() => setIsCustomPickerOpen((open) => !open)}
-              className={cn(
-                "flex size-7 items-center justify-center rounded-full border border-dashed transition-colors",
-                isCustomPickerOpen
-                  ? "border-primary bg-sidebar-accent text-foreground"
-                  : "border-border text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",
-              )}
-            >
-              <Plus className="size-3.5" />
-            </button>
+            {activeTheme === "default" ? (
+              <button
+                type="button"
+                aria-label="Custom color"
+                aria-pressed={isCustomPickerOpen}
+                onClick={() => setIsCustomPickerOpen((open) => !open)}
+                className={cn(
+                  "flex size-7 items-center justify-center rounded-full border border-dashed transition-colors",
+                  isCustomPickerOpen
+                    ? "border-primary bg-sidebar-accent text-foreground"
+                    : "border-border text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",
+                )}
+              >
+                <Plus className="size-3.5" />
+              </button>
+            ) : null}
           </div>
 
           <div className="mt-3 flex gap-2">
@@ -151,12 +161,14 @@ export function FilterSettingsPopover({
             onChange={setDraftColor}
             onSave={(nextColor) => {
               setDraftColor(nextColor);
-              const trimmed = draftLabel.trim();
-              if (trimmed) {
-                onSave(trimmed, nextColor);
-              }
+              setCustomDefaultColors((current) =>
+                current.some((item) => item.toLowerCase() === nextColor.toLowerCase())
+                  ? current
+                  : [...current, nextColor],
+              );
               setIsCustomPickerOpen(false);
             }}
+            onCancel={() => setIsCustomPickerOpen(false)}
           />
         ) : null}
       </div>

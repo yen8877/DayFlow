@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -9,6 +10,7 @@ interface CustomColorPickerPanelProps {
   value: string;
   onChange: (color: string) => void;
   onSave: (color: string) => void;
+  onCancel: () => void;
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -121,7 +123,12 @@ function hsvToHex(h: number, s: number, v: number) {
   return rgbToHex(r, g, b);
 }
 
-export function CustomColorPickerPanel({ value, onChange, onSave }: CustomColorPickerPanelProps) {
+export function CustomColorPickerPanel({
+  value,
+  onChange,
+  onSave,
+  onCancel,
+}: CustomColorPickerPanelProps) {
   const initial = hexToHsv(value);
   const [hue, setHue] = useState(initial.h);
   const [saturation, setSaturation] = useState(initial.s);
@@ -226,7 +233,18 @@ export function CustomColorPickerPanel({ value, onChange, onSave }: CustomColorP
   const previewColor = hsvToHex(hue, saturation, brightness);
 
   return (
-    <div className="w-52 rounded-lg border border-border bg-popover p-3 shadow-lg dark:bg-[#2d2d30]">
+    <div className="w-56 rounded-lg border border-border bg-popover p-3 shadow-lg dark:bg-[#2d2d30]">
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-[11px] font-medium text-muted-foreground">색상 추가</p>
+        <button
+          type="button"
+          aria-label="Close color picker"
+          onClick={onCancel}
+          className="rounded p-0.5 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+        >
+          <X className="size-3.5" />
+        </button>
+      </div>
       <div
         ref={slRef}
         role="presentation"
@@ -280,9 +298,14 @@ export function CustomColorPickerPanel({ value, onChange, onSave }: CustomColorP
         />
       </div>
 
-      <Button type="button" size="sm" className="mt-3 w-full" onClick={handleSave}>
-        저장
-      </Button>
+      <div className="mt-3 flex gap-2">
+        <Button type="button" size="sm" variant="outline" className="flex-1" onClick={onCancel}>
+          취소
+        </Button>
+        <Button type="button" size="sm" className="flex-1" onClick={handleSave}>
+          저장
+        </Button>
+      </div>
     </div>
   );
 }

@@ -109,6 +109,9 @@ export function SidebarFilterItem({
                 key={filter.id}
                 label={filter.label}
                 color={filter.color}
+                onColorPreview={(nextColor) => {
+                  onColorChange(filter.id, nextColor);
+                }}
                 onSave={(nextLabel, nextColor) => {
                   onLabelChange(filter.id, nextLabel);
                   onColorChange(filter.id, nextColor);
